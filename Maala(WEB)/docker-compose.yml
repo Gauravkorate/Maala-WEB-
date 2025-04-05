@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000/api
+      - REACT_APP_SOCKET_URL=http://localhost:5000
+    depends_on:
+      - server
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongodb:27017/maani
+      - JWT_SECRET=your_jwt_secret_key_here
+      - CLIENT_URL=http://localhost:3000
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - client
+      - server
+
+volumes:
+  mongodb_data:
+  redis_data: 
